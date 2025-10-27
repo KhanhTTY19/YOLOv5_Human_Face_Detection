@@ -1,0 +1,1 @@
+python val.py --weights runs/train/exp4/weights/best.pt --data coco.yaml --img 640 --device 0
