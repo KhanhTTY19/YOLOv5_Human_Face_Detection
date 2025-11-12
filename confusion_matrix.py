@@ -1,9 +1,10 @@
 # Recalculate confusion matrix
-import torch 
+from pathlib import Path
+
 import cv2
 import numpy as np
+import torch
 
-from pathlib import Path
 from models.common import DetectMultiBackend
 from utils.augmentations import letterbox
 from utils.general import non_max_suppression, scale_boxes
@@ -11,6 +12,7 @@ from utils.general import non_max_suppression, scale_boxes
 # ------------------------ #
 #  Utility Functions
 # ------------------------ #
+
 
 def clip_boxes(boxes, shape):
     """Clips bounding box coordinates (xyxy) to fit within the specified image shape (height, width)."""
@@ -41,32 +43,31 @@ def scale_boxes(img1_shape, boxes, img0_shape, ratio_pad=None):
 
 
 def bbox_iou(box1, box2, eps=1e-7):
-    """
-    Compute IoU between box1 (N,4) and box2 (M,4)
-    Returns: (N, M) matrix
+    """Compute IoU between box1 (N,4) and box2 (M,4) Returns: (N, M) matrix.
     """
     # box1: (N, 4) -> (N, 1, 4)
     # box2: (M, 4) -> (1, M, 4)
     box1 = box1.unsqueeze(1)  # (N, 1, 4)
     box2 = box2.unsqueeze(0)  # (1, M, 4)
-    
+
     # Tính intersection
     inter_min = torch.max(box1[..., :2], box2[..., :2])  # (N, M, 2)
     inter_max = torch.min(box1[..., 2:], box2[..., 2:])  # (N, M, 2)
     inter_wh = (inter_max - inter_min).clamp(0)  # (N, M, 2)
     inter = inter_wh[..., 0] * inter_wh[..., 1]  # (N, M)
-    
+
     # Tính union
     area1 = (box1[..., 2] - box1[..., 0]) * (box1[..., 3] - box1[..., 1])  # (N, 1)
     area2 = (box2[..., 2] - box2[..., 0]) * (box2[..., 3] - box2[..., 1])  # (1, M)
     union = area1 + area2 - inter + eps  # (N, M)
-    
+
     return inter / union  # (N, M)
 
 
 # ------------------------ #
 #  Confusion Matrix Class
 # ------------------------ #
+
 
 class ConfusionMatrix:
     def __init__(self, nc, conf=0.25, iou_thres=0.45):
@@ -118,11 +119,11 @@ class ConfusionMatrix:
 #  Load model & data
 # ------------------------ #
 
-weights = 'runs/train/yolov5s-640/weights/best.pt'
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+weights = "runs/train/yolov5s-640/weights/best.pt"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 imgsz = 640
-dataset_root = Path('/home/khanhtty/dataset/COCO2017')
-val_txt = dataset_root / 'val2017.txt'
+dataset_root = Path("/home/khanhtty/dataset/COCO2017")
+val_txt = dataset_root / "val2017.txt"
 
 model = DetectMultiBackend(weights, device=device)
 stride = model.stride
@@ -131,7 +132,7 @@ nc = len(names)
 
 cm = ConfusionMatrix(nc, conf=0.25, iou_thres=0.45)
 
-with open(val_txt, 'r') as f:
+with open(val_txt) as f:
     lines = f.readlines()  # lấy 100 ảnh đầu
 
 for line in lines:
@@ -140,7 +141,7 @@ for line in lines:
         continue
 
     img_path = dataset_root / line if not Path(line).is_absolute() else Path(line)
-    label_path = Path(str(img_path).replace('images', 'labels').replace('.jpg', '.txt'))
+    label_path = Path(str(img_path).replace("images", "labels").replace(".jpg", ".txt"))
 
     img0 = cv2.imread(str(img_path))
     if img0 is None:
