@@ -267,8 +267,12 @@ def run(
                                 (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()
                             )  # normalized xywh
                         else:
-                            coords = (torch.tensor(xyxy).view(1, 4) / gn).view(-1).tolist()  # xyxy
-                        line = (cls, *coords, conf) if save_conf else (cls, *coords)  # label format
+                            # coords = (torch.tensor(xyxy).view(1, 4) / gn).view(-1).tolist()  # xyxy
+                            coords = (torch.tensor(xyxy).view(1, 4)).view(-1).tolist()  # xyxy but not normalize
+                            coords[3] = coords[3] - coords[1]
+                            coords[2] = coords[2] - coords[0]   # change coordinate to put to SORT
+                        # line = (cls, *coords, conf) if save_conf else (cls, *coords)  # label format
+                        line = (*coords, conf, cls) if save_conf else (cls, *coords)  # change the order of label format x1, y1, width, height, conf, cls
                         with open(f"{txt_path}.txt", "a") as f:
                             f.write(("%g " * len(line)).rstrip() % line + "\n")
 

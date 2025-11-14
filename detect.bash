@@ -1,0 +1,1 @@
+python3 detect.py   --weights runs/train/yolov5s-640/weights/best.pt   --source ../dataset/SCT/5_persons.mp4   --save-txt --save-conf --save-format 1 --classes 0  --name 5_persons
