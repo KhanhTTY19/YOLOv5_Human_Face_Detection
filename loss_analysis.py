@@ -1,25 +1,27 @@
-import torch
+from pathlib import Path
+
 import cv2
 import numpy as np
-from pathlib import Path
+import torch
+
 from models.common import DetectMultiBackend
 from utils.augmentations import letterbox
 from utils.general import non_max_suppression, scale_boxes
 
 # ==== CONFIG ====
-weights = 'runs/train/yolov5s-640/weights/best.pt'
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+weights = "runs/train/yolov5s-640/weights/best.pt"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 imgsz = 640
-dataset_root = Path('/home/khanhtty/dataset/COCO2017')  # dataset root
-val_txt = dataset_root / 'val2017.txt'  
-save_dir = Path('./runs/train/yolov5s-640/compare_vis')
+dataset_root = Path("/home/khanhtty/dataset/COCO2017")  # dataset root
+val_txt = dataset_root / "val2017.txt"
+save_dir = Path("./runs/train/yolov5s-640/compare_vis")
 save_dir.mkdir(parents=True, exist_ok=True)
 
 model = DetectMultiBackend(weights, device=device)
 stride = model.stride
 names = model.names
 
-with open(val_txt, 'r') as f:
+with open(val_txt) as f:
     lines = f.readlines()
 
 img_paths = []
@@ -38,8 +40,8 @@ for img_path in img_paths:
     print(f"Processing {file_name}...")
 
     # ==== LOAD IMAGE & LABEL ====
-    label_path = str(img_path).replace('/images/', '/labels/').replace('.jpg', '.txt').replace('.png', '.txt')
-    
+    label_path = str(img_path).replace("/images/", "/labels/").replace(".jpg", ".txt").replace(".png", ".txt")
+
     img0 = cv2.imread(str(img_path))
     if img0 is None:
         print(f"Cannot read {img_path}, skipping.")
@@ -83,21 +85,19 @@ for img_path in img_paths:
 
     # Predicted boxes (đỏ)
     for *xyxy, conf, cls in pred_boxes:
-        label = f'{names[int(cls)]} {conf:.2f}'
+        label = f"{names[int(cls)]} {conf:.2f}"
         c1, c2 = (int(xyxy[0]), int(xyxy[1])), (int(xyxy[2]), int(xyxy[3]))
         cv2.rectangle(img_show, c1, c2, (0, 0, 255), 2)
-        cv2.putText(img_show, label, (c1[0], c1[1] - 5),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+        cv2.putText(img_show, label, (c1[0], c1[1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
 
     # Ground truth boxes (xanh lá)
-    for (x1, y1, x2, y2, c) in gt_boxes:
-        label = f'{names[int(c)]} (GT)'
+    for x1, y1, x2, y2, c in gt_boxes:
+        label = f"{names[int(c)]} (GT)"
         cv2.rectangle(img_show, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        cv2.putText(img_show, label, (x1, y1 - 5),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+        cv2.putText(img_show, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
     # ==== SAVE OUTPUT ====
-    save_path = save_dir / f'{file_name}_compare.jpg'
+    save_path = save_dir / f"{file_name}_compare.jpg"
     cv2.imwrite(str(save_path), img_show)
     print(f"Saved to {save_path}")
 
